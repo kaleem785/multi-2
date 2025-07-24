@@ -1,0 +1,346 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider     = "mysql"
+  url          = env("DATABASE_URL")
+  relationMode = "prisma"
+}
+
+enum Role {
+  USER
+  ADMIN
+  SELLER
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  picture   String   @db.Text
+  role      Role     @default(USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  stores    Store[]  @relation("UserStores")
+  following Store[]  @relation("UserFollowingStore")
+  reviews   Review[]
+}
+
+model Category {
+  id            String        @id @default(uuid())
+  name          String        @unique
+  image         String
+  url           String        @unique
+  featured      Boolean       @default(false)
+  subCategories SubCategory[]
+  products      Product[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model SubCategory {
+  id       String  @id @default(uuid())
+  name     String
+  image    String
+  url      String  @unique
+  featured Boolean @default(false)
+
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  categoryId String
+  category   Category  @relation(fields: [categoryId], references: [id])
+  products   Product[]
+
+  @@index([categoryId])
+}
+
+enum StoreStatus {
+  PENDING
+  ACTIVE
+  BANNED
+  DISABLED
+}
+
+model Store {
+  id                               String      @id @default(uuid())
+  name                             String
+  description                      String      @db.Text
+  email                            String      @unique
+  phone                            String
+  url                              String      @unique
+  logo                             String
+  cover                            String
+  status                           StoreStatus @default(PENDING)
+  averageRating                    Float       @default(0)
+  featured                         Boolean     @default(false)
+  returnPolicy                     String      @default("Return in 30 days.")
+  defaultShippingService           String      @default("International Delivery")
+  defaultShippingFeePerItem        Float       @default(0)
+  defaultShippingFeeAdditionalItem Float       @default(0)
+  defaultShippingFeePerKg          Float       @default(0)
+  defaultShippingFeeFixed          Float       @default(0)
+  defaultDeliveryTimeMin           Int         @default(7)
+  defaultDeliveryTimeMax           Int         @default(31)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  userId        String
+  user          User           @relation("UserStores", fields: [userId], references: [id])
+  products      Product[]
+  shippingRates ShippingRate[]
+  followers     User[]         @relation("UserFollowingStore")
+
+  @@index([userId])
+}
+
+enum ShippingFeeMethod {
+  ITEM
+  WEIGHT
+  FIX
+}
+
+model Product {
+  id                String            @id @default(uuid())
+  name              String
+  description       String            @db.LongText
+  slug              String            @unique
+  brand             String
+  rating            Float             @default(0)
+  sales             Int               @default(0)
+  shippingFeeMethod ShippingFeeMethod @default(ITEM)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  storeId String
+  store   Store  @relation(fields: [storeId], references: [id])
+
+  categoryId    String
+  category      Category         @relation(fields: [categoryId], references: [id])
+  subCategoryId String
+  subCategory   SubCategory      @relation(fields: [subCategoryId], references: [id])
+  variants      ProductVariant[]
+  specs         Spec[]
+  questions     Question[]
+  offerTag      OfferTag?        @relation(fields: [offerTagId], references: [id])
+  offerTagId    String?
+  freeShipping  FreeShipping?
+  reviews       Review[]
+
+  @@index([storeId])
+  @@index([categoryId])
+  @@index([subCategoryId])
+  @@index([offerTagId])
+}
+
+model ProductVariant {
+  id                 String  @id @default(uuid())
+  variantName        String
+  variantDescription String? @db.LongText
+  variantImage       String
+  slug               String  @unique
+  isSale             Boolean @default(false)
+  saleEndDate        String?
+  keywords           String
+  sku                String
+  sales              Int     @default(0)
+  weight             Float
+
+  productId String
+  product   Product               @relation(fields: [productId], references: [id])
+  sizes     Size[]
+  images    ProductVariantImage[]
+  colors    Color[]
+  specs     Spec[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@index([productId])
+}
+
+model Size {
+  id       String @id @default(uuid())
+  size     String
+  quantity Int
+  price    Float
+  discount Float  @default(0)
+
+  productVariantId String
+  productVariant   ProductVariant @relation(fields: [productVariantId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@index([productVariantId])
+}
+
+model ProductVariantImage {
+  id               String         @id @default(uuid())
+  url              String
+  alt              String         @default("")
+  productVariantId String
+  productVariant   ProductVariant @relation(fields: [productVariantId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@index([productVariantId])
+}
+
+model Color {
+  id   String @id @default(uuid())
+  name String
+
+  productVariantId String
+  productVariant   ProductVariant @relation(fields: [productVariantId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@index([productVariantId])
+}
+
+model Spec {
+  id    String @id @default(uuid())
+  name  String
+  value String
+
+  productId String?
+  product   Product?        @relation(fields: [productId], references: [id], onDelete: Cascade)
+  variantId String?
+  variant   ProductVariant? @relation(fields: [variantId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@index([productId])
+  @@index([variantId])
+}
+
+model Question {
+  id        String   @id @default(uuid())
+  question  String
+  answer    String?  @db.LongText
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+}
+
+model OfferTag {
+  id   String @id @default(uuid())
+  name String
+  url  String @unique
+
+  products Product[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+}
+
+model Country {
+  id   String @id @default(uuid())
+  name String @unique
+  code String @unique
+
+  createdAt             DateTime              @default(now())
+  updatedAt             DateTime              @default(now()) @updatedAt
+  shippingRates         ShippingRate[]
+  freeShippingCountries FreeShippingCountry[]
+}
+
+model ShippingRate {
+  id String @id @default(uuid())
+
+  shippingService           String
+  shippingFeePerItem        Float
+  shippingFeeAdditionalItem Float
+  shippingFeePerKg          Float
+  shippingFeeFixed          Float
+  deliveryTimeMin           Int
+  deliveryTimeMax           Int
+  returnPolicy              String
+
+  countryId String
+  country   Country @relation(fields: [countryId], references: [id])
+  storeId   String
+  store     Store   @relation(fields: [storeId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@index([countryId])
+  @@index([storeId])
+}
+
+model FreeShipping {
+  id                String                @id @default(uuid())
+  productId         String                @unique
+  product           Product               @relation(fields: [productId], references: [id], onDelete: Cascade)
+  eligibleCountries FreeShippingCountry[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+}
+
+model FreeShippingCountry {
+  id String @id @default(uuid())
+
+  freeShippingId String
+  freeShipping   FreeShipping @relation(fields: [freeShippingId], references: [id], onDelete: Cascade)
+
+  countryId String
+  country   Country @relation(fields: [countryId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@index([freeShippingId])
+  @@index([countryId])
+}
+
+model Review {
+  id       String @id @default(uuid())
+  variant  String
+  review   String
+  rating   Float
+  color    String
+  size     String
+  quantity String
+  likes    Int    @default(0)
+
+  images    ReviewImage[]
+  userId    String
+  user      User          @relation(fields: [userId], references: [id])
+  productId String
+  product   Product       @relation(fields: [productId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@index([userId])
+  @@index([productId])
+}
+
+model ReviewImage {
+  id  String @id @default(uuid())
+  url String
+  alt String @default("")
+
+  review   Review? @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  reviewId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@index([reviewId])
+}

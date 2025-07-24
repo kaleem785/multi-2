@@ -3,6 +3,9 @@ import { Inter, Barlow } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "next-themes";
 import { ClerkProvider } from "@clerk/nextjs";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css"; // Import the Toastify CSS
+import ModalProvider from "@/providers/modal-provider";
 
 const interFont = Inter({ subsets: ["latin"] });
 const barlowFont = Barlow({
@@ -33,7 +36,18 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            {children}
+            <ModalProvider>{children}</ModalProvider>
+
+            <ToastContainer
+              position='top-right' // Adjust position as needed
+              autoClose={5000} // Auto close after 5 seconds
+              hideProgressBar={false}
+              newestOnTop={false}
+              closeOnClick
+              pauseOnHover
+              draggable
+              pauseOnFocusLoss
+            />
           </ThemeProvider>
         </body>
       </html>
