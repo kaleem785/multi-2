@@ -2,22 +2,22 @@
 import { ProductVariantImage } from "@/generated/prisma";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
-import { useState } from "react";
+import { Dispatch, SetStateAction, useState } from "react";
 // Image zoom
 import ImageZoom from "react-image-zooom";
 
 export default function ProductSwiper({
   images,
+  activeImage,
+  setActiveImage,
 }: {
   images: ProductVariantImage[];
+  activeImage: ProductVariantImage | null;
+  setActiveImage: Dispatch<SetStateAction<ProductVariantImage | null>>;
 }) {
   //if no images provided, exist early and dont render anything
   if (!images) return;
   // useState hook to manage the active image being displayed,initialized to the first
-
-  const [activeImage, setActiveImage] = useState<ProductVariantImage>(
-    images[0]
-  );
 
   return (
     <div className='relative '>
@@ -26,11 +26,13 @@ export default function ProductSwiper({
         <div className='flex flex-wrap xl:flex-col gap-3'>
           {images.map((img) => (
             <div
-              key={img.url}
+              key={img.id}
               className={cn(
                 "w-16 h-16 rounded-md grid place-items-center overflow-hidden border border-gray-100 cursor-pointer transition-all duration-75 ease-in",
                 {
-                  "border-main-primary": activeImage.id === img.id,
+                  "border-main-primary": activeImage
+                    ? activeImage.id === img.id
+                    : false,
                 }
               )}
               onMouseEnter={() => setActiveImage(img)}
@@ -45,10 +47,11 @@ export default function ProductSwiper({
             </div>
           ))}
         </div>
+
         {/* Image View */}
         <div className='relative rounded-lg overflow-hidden w-full 2xl:h-[600px] 2xl:w-[600px]'>
           <ImageZoom
-            src={activeImage.url}
+            src={activeImage ? activeImage.url : ""}
             zoom={200}
             className='!w-full rounded-lg'
           />

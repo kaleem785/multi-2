@@ -2,8 +2,11 @@ import {
   FreeShipping,
   FreeShippingCountry,
   ProductVariantImage,
+  Review,
+  ReviewImage,
   ShippingRate,
   Size,
+  User,
 } from "@/generated/prisma";
 import {
   formatProductResponse,
@@ -162,3 +165,42 @@ export type RatingStatisticsType = Awaited<
 export type StatisticsCardType = Awaited<
   ReturnType<typeof getRatingStatistics>
 >["ratingStatistics"];
+
+export type ReviewWithImageType = Review & {
+  images: ReviewImage[];
+  user: User;
+};
+
+// Define a local SortOrder type
+export type SortOrder = "asc" | "desc";
+
+export type ReviewsFilterType = {
+  rating?: number;
+  hasImages?: boolean;
+};
+
+export type ReviewsOrdereType = {
+  orderBy: "latest" | "oldest" | "highest";
+};
+
+export type VariantInfoType = {
+  variantName: string;
+  variantSlug: string;
+  variantImage: string;
+  variantUrl: string;
+  images: ProductVariantImage[];
+  sizes: Size[];
+  colors: { name: string }[];
+};
+
+export type ReviewDetailsType = {
+  id: string;
+  review: string;
+  rating: number;
+  images: { url: string }[];
+  size: string;
+  quantity: string;
+  variant: string;
+  variantImage: string;
+  color: string;
+};

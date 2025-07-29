@@ -2,7 +2,7 @@
 import { CartProductType, ProductPageDataType } from "@/lib/types";
 import Image from "next/image";
 import Link from "next/link";
-import { FC } from "react";
+import { Dispatch, FC, SetStateAction } from "react";
 import { CopyIcon } from "@/components/store/icons";
 import ReactStars from "react-rating-stars-component";
 import toast from "react-hot-toast";
@@ -13,6 +13,7 @@ import ColorWheel from "@/components/shared/color-wheel";
 import ProductVariantSelector from "./variant-selector";
 import SizeSelector from "./size-selector";
 import ProductAssurancePolicy from "./assurance-policy";
+import { ProductVariantImage } from "@/generated/prisma";
 // import { toast } from "react-toastify";
 
 interface Props {
@@ -20,6 +21,8 @@ interface Props {
   quantity?: number;
   sizeId: string | undefined;
   handleChange: (property: keyof CartProductType, value: any) => void;
+  setVariantImages: Dispatch<SetStateAction<ProductVariantImage[]>>;
+  setActiveImage: Dispatch<SetStateAction<ProductVariantImage | null>>;
 }
 
 const ProductInfo: FC<Props> = ({
@@ -27,6 +30,8 @@ const ProductInfo: FC<Props> = ({
   quantity,
   sizeId,
   handleChange,
+  setVariantImages,
+  setActiveImage,
 }) => {
   // Check if productData exists, return null if it's missing
   if (!productData) return null;
@@ -35,7 +40,7 @@ const ProductInfo: FC<Props> = ({
     name,
     sku,
     colors,
-    variantImages,
+    variantsInfo,
     sizes,
     isSale,
     saleEndDate,
@@ -136,10 +141,12 @@ const ProductInfo: FC<Props> = ({
           </span>
         </div>
         <div className='mt-4'>
-          {variantImages.length > 0 && (
+          {variantsInfo.length > 0 && (
             <ProductVariantSelector
-              variansts={variantImages}
+              variansts={variantsInfo}
               slug={productData.variantSlug}
+              setVariantImages={setVariantImages}
+              setActiveImage={setActiveImage}
             />
           )}
         </div>

@@ -9,6 +9,7 @@ import ReturnsSecurityPrivacyCard from "./returns-security-privacy-card";
 import { cn, isProductValidToAdd } from "@/lib/utils";
 import QuantitySelector from "./quantity-selector";
 import SocialShare from "../shared/social-share";
+import { ProductVariantImage } from "@/generated/prisma";
 
 interface Props {
   productData: ProductPageDataType;
@@ -20,6 +21,15 @@ const ProductPageContainer: FC<Props> = ({ productData, sizeId, children }) => {
   if (!productData) return null;
   const { images, shippingDetails, sizes } = productData;
   if (typeof shippingDetails === "boolean") return null;
+  //state for temporary product images
+
+  const [variantImages, setVariantImages] =
+    useState<ProductVariantImage[]>(images);
+  // usestate hook to manage the active image being displayed,initiallized to the first image in the array
+  const [activeImage, setActiveImage] = useState<ProductVariantImage | null>(
+    images[0]
+  );
+
   // Initialize the default product data for the cart items
   const data: CartProductType = {
     productId: productData.productId,
@@ -65,21 +75,25 @@ const ProductPageContainer: FC<Props> = ({ productData, sizeId, children }) => {
     const check = isProductValidToAdd(productToBeAddedToCart);
     setIsProductValid(check);
   }, [productToBeAddedToCart]);
-
-  console.log(productToBeAddedToCart.stock, "stock --->");
-  console.log(productToBeAddedToCart.quantity, "quantity --->");
+  console.log(variantImages, "immage check kaleem");
 
   return (
     <div className='relative '>
       <div className='w-full xl:flex xl:gap-4'>
         {/* Product images swiper */}
-        <ProductSwiper images={images} />
+        <ProductSwiper
+          images={variantImages.length > 0 ? variantImages : images}
+          activeImage={activeImage || images[0]}
+          setActiveImage={setActiveImage}
+        />
         <div className='w-full mt-4 md:mt-0 flex flex-col gap-4 md:flex-row'>
           {/* Product main info */}
           <ProductInfo
             productData={productData}
             sizeId={sizeId}
             handleChange={handleChange}
+            setVariantImages={setVariantImages}
+            setActiveImage={setActiveImage}
           />
           {/* Shipping details - Buy Actions card */}
           <div className='w-[390px]'>
